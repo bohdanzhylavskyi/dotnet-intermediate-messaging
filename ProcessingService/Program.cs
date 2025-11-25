@@ -8,6 +8,7 @@ namespace ProcessingService
     {
         private const string DocumentsDestinationFolderName = "Documents";
         private const string DocumentsMessageBusExchangeName = "documents-exchange";
+        private const string DocumentsMessageBusQueueName = "documents-queue";
         private const string DocumentsMessageBusRoutingKey = "documents";
 
         static async Task Main(string[] args)
@@ -33,6 +34,7 @@ namespace ProcessingService
             return new DocumentsMessageBus(
                 connectionFactory,
                 exchangeName: DocumentsMessageBusExchangeName,
+                queueName: DocumentsMessageBusQueueName,
                 routingKey: DocumentsMessageBusRoutingKey
             );
         }
