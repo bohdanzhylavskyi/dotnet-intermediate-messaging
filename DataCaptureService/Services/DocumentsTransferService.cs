@@ -12,6 +12,7 @@ namespace DataCaptureService.Services
     internal class DocumentsTransferService : IDocumentsTransferService
     {
         private readonly DocumentsMessageBus _documentsMessageBus;
+        private const int DocumentChunkContentMaxSizeInBytes = 1024 * 1024; // 1 MB
 
         public DocumentsTransferService(DocumentsMessageBus documentsMessageBus)
         {
@@ -21,9 +22,8 @@ namespace DataCaptureService.Services
         public async Task PublishDocument(Document document)
         {
             var sequenceId = Guid.NewGuid().ToString();
-            var chunkSizeInBytes = 256;
 
-            await foreach (var fileChunk in ReadFileAsChunks(document.FullPath, chunkSizeInBytes))
+            await foreach (var fileChunk in ReadFileAsChunks(document.FullPath, DocumentChunkContentMaxSizeInBytes))
             {
                 var chunk = new DocumentChunk()
                 {

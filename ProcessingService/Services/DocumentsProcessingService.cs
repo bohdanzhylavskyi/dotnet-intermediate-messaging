@@ -1,5 +1,6 @@
 ﻿using Messaging.Shared;
 using ProcessingService.Messaging;
+using ProcessingService.Utils;
 
 namespace ProcessingService.Services
 {
@@ -9,21 +10,21 @@ namespace ProcessingService.Services
         private string _documentsDestinationFolderPath;
 
         public DocumentsProcessingService(
-            IDocumentsMessageBus documentsTransferMessageBus,
+            IDocumentsMessageBus documentsMessageBus,
             string documentsDestinationFolderPath)
         {
-            this._documentsMessageBus = documentsTransferMessageBus;
+            this._documentsMessageBus = documentsMessageBus;
             this._documentsDestinationFolderPath = documentsDestinationFolderPath;
         }
 
         public void Start()
         {
-            _documentsMessageBus.Subscribe(HandleDocumentChunkReceived);
+            _documentsMessageBus.ConsumeDocuments(HandleDocumentChunkReceived);
         }
 
         private void HandleDocumentChunkReceived(DocumentChunk chunk)
         {
-            Console.WriteLine($"CHUNK RECEIVED: seqId: {chunk.SequenceId}, position: {chunk.Position}, size: {chunk.SequenceSize}");
+            Console.WriteLine($"Document Chunk Received: fileName: {chunk.Filename}, seqId: {chunk.SequenceId}, position: {chunk.Position}, size: {chunk.SequenceSize}");
 
             var tempDocumentFilePath = Path.Combine(_documentsDestinationFolderPath, ResolveTempDocumentFilename(chunk.SequenceId));
             var documentFilePath = Path.Combine(_documentsDestinationFolderPath, ResolveDocumentFilename(chunk));
@@ -32,14 +33,14 @@ namespace ProcessingService.Services
             {
                 if (chunk.Position == chunk.SequenceSize)
                 {
-                    CreateFile(
+                    FsUtils.CreateFile(
                         filePath: documentFilePath,
                         chunk.Body
                     );
 
                 } else
                 {
-                    CreateFile(
+                    FsUtils.CreateFile(
                         filePath: tempDocumentFilePath,
                         chunk.Body
                     );
@@ -50,17 +51,17 @@ namespace ProcessingService.Services
 
             if (chunk.Position == chunk.SequenceSize)
             {
-                AppendToFile(
+                FsUtils.AppendToFile(
                     filePath: tempDocumentFilePath,
                     chunk.Body
                 );
 
-                MoveFile(tempDocumentFilePath, documentFilePath);
+                FsUtils.MoveFile(tempDocumentFilePath, documentFilePath);
 
                 return;
             }
 
-            AppendToFile(
+            FsUtils.AppendToFile(
                 filePath: tempDocumentFilePath,
                 chunk.Body
             );
@@ -73,31 +74,6 @@ namespace ProcessingService.Services
 
         private string ResolveDocumentFilename(DocumentChunk chunk) {
             return chunk.Filename;
-        }
-
-        private void CreateFile(string filePath, byte[] content)
-        {
-            using (var stream = new FileStream(filePath, FileMode.Append, FileAccess.Write))
-            {
-                var data = content;
-
-                stream.Write(data, 0, data.Length);
-            }
-        }
-
-        private void AppendToFile(string filePath, byte[] content)
-        {
-            using (var stream = new FileStream(filePath, FileMode.Append, FileAccess.Write))
-            {
-                var data = content;
-
-                stream.Write(data, 0, data.Length);
-            }
-        }
-
-        private void MoveFile(string filePath, string newFilePath)
-        {
-            File.Move(filePath, newFilePath);
         }
     }
 }

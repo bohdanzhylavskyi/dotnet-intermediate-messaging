@@ -7,7 +7,7 @@ namespace ProcessingService.Messaging
 {
     public interface IDocumentsMessageBus
     {
-        void Subscribe(Action<DocumentChunk> handler);
+        void ConsumeDocuments(Action<DocumentChunk> handler);
     }
 
     internal class DocumentsMessageBus : IDocumentsMessageBus
@@ -26,7 +26,7 @@ namespace ProcessingService.Messaging
             this._routingKey = routingKey;
         }
 
-        public async Task Setup()
+        public async Task SetupAsync()
         {
             var connection = await this._connectionFactory.CreateConnectionAsync();
             var channel = await connection.CreateChannelAsync();
@@ -45,7 +45,7 @@ namespace ProcessingService.Messaging
             this._consumer = consumer;
         }
 
-        public void Subscribe(Action<DocumentChunk> handler)
+        public void ConsumeDocuments(Action<DocumentChunk> handler)
         {
             _consumer!.ReceivedAsync += (model, ea) =>
             {

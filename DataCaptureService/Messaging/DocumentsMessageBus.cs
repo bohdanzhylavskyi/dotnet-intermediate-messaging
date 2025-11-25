@@ -14,7 +14,7 @@ namespace DataCaptureService.Messaging
         private readonly ConnectionFactory _connectionFactory;
         private readonly string _exchangeName;
         private readonly string _routingKey;
-        private IChannel? channel;
+        private IChannel? _channel;
 
         public DocumentsMessageBus(ConnectionFactory connectionFactory,
                                    string exchangeName,
@@ -25,12 +25,12 @@ namespace DataCaptureService.Messaging
             this._routingKey = routingKey;
         }
 
-        public async Task Setup()
+        public async Task SetupAsync()
         {
             var connection = await this._connectionFactory.CreateConnectionAsync();
             var channel = await connection.CreateChannelAsync();
 
-            this.channel = channel;
+            this._channel = channel;
 
             await channel.ExchangeDeclareAsync(exchange: this._exchangeName, type: ExchangeType.Direct);
         }
@@ -39,7 +39,7 @@ namespace DataCaptureService.Messaging
         {
             var message = JsonSerializer.SerializeToUtf8Bytes(documentChunk);
 
-            await channel!.BasicPublishAsync(
+            await _channel!.BasicPublishAsync(
                 exchange: this._exchangeName,
                 routingKey: this._routingKey,
                 body: message

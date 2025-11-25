@@ -11,14 +11,16 @@
         public required string Filename;
     }
 
-    internal class FsDocumentsSource : IDocumentsSource, IDisposable
+    internal class DocumentsSource : IDocumentsSource, IDisposable
     {
+        private const string FileWatcherFilter = "*.pdf";
+
         private readonly string _sourceFolderPath;
         private FileSystemWatcher? _fsWatcher;
 
         public event EventHandler<DocumentCreatedEventArgs>? DocumentCreated;
 
-        public FsDocumentsSource(string sourceFolderPath)
+        public DocumentsSource(string sourceFolderPath)
         {
             this._sourceFolderPath = sourceFolderPath;
         }
@@ -28,7 +30,7 @@
             var watcher = new FileSystemWatcher
             {
                 Path = _sourceFolderPath,
-                Filter = "*.*",
+                Filter = FileWatcherFilter,
                 NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite
             };
 
@@ -36,14 +38,6 @@
             watcher.EnableRaisingEvents = true;
 
             this._fsWatcher = watcher;
-        }
-
-        public void FireDocumentCreated()
-        {
-            this.DocumentCreated?.Invoke(this, new DocumentCreatedEventArgs() {
-                FullPath = "D:\\dot-net-projects\\intermediate-course\\Messaging\\DataCaptureService\\bin\\Debug\\net8.0\\CaptureSource\\test.txt",
-                Filename = "test.txt",
-            });
         }
 
         private async void HandleDocumentFileCreated(object sender, FileSystemEventArgs args)
@@ -71,12 +65,12 @@
                         FileAccess.Read,
                         FileShare.ReadWrite))
                     {
-                        return; // file is ready
+                        return;
                     }
                 }
                 catch (IOException)
                 {
-                    await Task.Delay(100); // retry
+                    await Task.Delay(100);
                 }
             }
         }

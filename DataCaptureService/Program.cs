@@ -7,14 +7,14 @@ namespace DataCaptureService
     internal class Program
     {
         private const string DocumentsSourceFolderName = "Documents";
-        private const string DocumentsMessageBusExchangeName = "direct_logs";
+        private const string DocumentsMessageBusExchangeName = "documents-exchange";
         private const string DocumentsMessageBusRoutingKey = "documents";
 
         static async Task Main(string[] args)
         {
             var documentsSourceFolderPath = ResolveDocumentsSourceFolderPath();
 
-            var documentsSource = new FsDocumentsSource(documentsSourceFolderPath);
+            var documentsSource = new DocumentsSource(documentsSourceFolderPath);
             var documentsMessageBus = ConfigureDocumentsMessageBus();
 
             var documentsTransferService = new DocumentsTransferService(documentsMessageBus);
@@ -24,7 +24,7 @@ namespace DataCaptureService
                 documentsTransferService
             );
 
-            await documentsMessageBus.Setup();
+            await documentsMessageBus.SetupAsync();
             
             documentsSource.Start();
             dataCapturingService.Start();

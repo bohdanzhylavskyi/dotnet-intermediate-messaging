@@ -7,14 +7,14 @@ namespace ProcessingService
     internal class Program
     {
         private const string DocumentsDestinationFolderName = "Documents";
-        private const string DocumentsMessageBusExchangeName = "direct_logs";
+        private const string DocumentsMessageBusExchangeName = "documents-exchange";
         private const string DocumentsMessageBusRoutingKey = "documents";
 
         static async Task Main(string[] args)
         {
             var documentsMessageBus = ConfigureDocumentsMessageBus();
 
-            await documentsMessageBus.Setup();
+            await documentsMessageBus.SetupAsync();
 
             var processingService = new DocumentsProcessingService(
                 documentsMessageBus,
